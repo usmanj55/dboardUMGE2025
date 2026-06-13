@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ms" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Papan Pemuka Kebolehpasaran Graduan 2025/2026</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              750: '#1e293b',
+              850: '#1e293b', // disesuaikan untuk konsistensi tema gelap
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Ubah suai bar skrol untuk jadual */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Kotak Notifikasi Tersuai -->
+  <div id="notification-box" class="fixed bottom-5 right-5 z-50 bg-indigo-600 text-white px-5 py-3 rounded-lg shadow-xl border border-indigo-400 flex items-center space-x-3 hidden transform translate-y-10 opacity-0 transition-all duration-300">
+    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span id="notification-text" class="font-medium text-sm"></span>
+  </div>
+
+  <!-- Bahagian Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex flex-col sm:flex-row items-center justify-between py-4 sm:py-0">
+      <div class="flex items-center space-x-3">
+        <div class="p-2.5 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-xl shadow-lg shadow-indigo-500/20">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
+            PAPAN PEMUKA GE 2025/2026
+          </h1>
+          <p class="text-xs text-slate-400">Universiti Malaya • Setakat 28 Februari 2026</p>
+        </div>
+      </div>
+      
+      <!-- Suis Togel Dataset (Baru) -->
+      <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800 my-2 sm:my-0">
+        <button 
+          id="btn-dataset-all"
+          onclick="switchDataset('ALL_GRAD')"
+          class="px-4 py-1.5 text-xs font-bold rounded-lg transition duration-200 bg-indigo-600 text-white shadow-md"
+        >
+          Keseluruhan
+        </button>
+        <button 
+          id="btn-dataset-warga"
+          onclick="switchDataset('CITIZEN')"
+          class="px-4 py-1.5 text-xs font-bold rounded-lg transition duration-200 text-slate-400 hover:text-white"
+        >
+          Warganegara
+        </button>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button 
+          onclick="resetData()"
+          class="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition duration-150 flex items-center space-x-2"
+        >
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 12H16" />
+          </svg>
+          <span>Set Asal</span>
+        </button>
+        <button 
+          onclick="exportCSV()"
+          class="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition duration-150 shadow-md shadow-indigo-600/10 flex items-center space-x-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>CSV</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow space-y-8">
+    
+    <!-- Bahagian Kad KPI Ringkasan -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      
+      <!-- Kad 1: Jumlah Graduan -->
+      <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+        <div>
+          <p id="kpi-label-total" class="text-xs font-medium text-slate-400 uppercase tracking-wider">Jumlah Graduan (Keseluruhan)</p>
+          <h3 id="kpi-total" class="text-3xl font-extrabold mt-2 text-white">-</h3>
+          <p class="text-xs text-slate-500 mt-1">Lembaga Penilai & SKPG KPT</p>
+        </div>
+        <div class="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Kad 2: Purata GE -->
+      <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+        <div>
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Kadar GE Purata</p>
+          <h3 id="kpi-rate" class="text-3xl font-extrabold mt-2 text-emerald-400">-</h3>
+          <div class="flex items-center space-x-1.5 mt-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="kpi-dataset-badge" class="text-xs text-slate-400 font-medium">Kadar Kebolehpasaran Semasa</span>
+          </div>
+        </div>
+        <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Kad 3: Graduan Bekerja -->
+      <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+        <div>
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Graduan Bekerja</p>
+          <h3 id="kpi-employed" class="text-3xl font-extrabold mt-2 text-teal-400">-</h3>
+          <p class="text-xs text-slate-400 mt-1">Berjaya ditempatkan</p>
+        </div>
+        <div class="p-3 bg-teal-500/10 rounded-xl text-teal-400">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Kad 4: Belum Bekerja -->
+      <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+        <div>
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Belum Bekerja</p>
+          <h3 id="kpi-unemployed" class="text-3xl font-extrabold mt-2 text-rose-400">-</h3>
+          <p id="kpi-unemployed-rate" class="text-xs text-rose-400/80 mt-1">-</p>
+        </div>
+        <div class="p-3 bg-rose-500/10 rounded-xl text-rose-400">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bahagian Visualisasi Carta & Simulator -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Bahagian Carta Bar Mendatar (Dua Pertiga Lebar pada Desktop) -->
+      <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 lg:col-span-2 space-y-4 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 id="chart-main-title" class="text-lg font-bold text-white">Taburan Peratusan Kebolehpasaran (GE)</h4>
+              <p class="text-xs text-slate-400">Prestasi kadar bekerja mengikut fakulti/institusi</p>
+            </div>
+            <span id="faculty-count-badge" class="text-xs font-semibold bg-indigo-950 text-indigo-400 border border-indigo-900/50 px-2.5 py-1 rounded-full">
+              - Fakulti Dipaparkan
+            </span>
+          </div>
+          <!-- Canvas untuk Chart.js (Carta Bar) -->
+          <div class="relative h-[400px]">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Legend Petunjuk Kebolehpasaran -->
+        <div class="flex flex-wrap items-center justify-center gap-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
+          <div class="flex items-center space-x-2">
+            <span class="w-3.5 h-3.5 rounded bg-emerald-500"></span>
+            <span>Cemerlang ( &ge; 95% )</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3.5 h-3.5 rounded bg-amber-500"></span>
+            <span>Sederhana ( 87.01% - 94.99% )</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3.5 h-3.5 rounded bg-rose-500"></span>
+            <span>Kritikal ( &le; 87% )</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bahagian Carta Donut & Simulator Sisi -->
+      <div class="space-y-6">
+        
+        <!-- Carta Donut Nisbah Pasaran Semasa -->
+        <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 space-y-4">
+          <h4 class="text-sm font-bold text-white uppercase tracking-wider">Nisbah Pasaran Semasa</h4>
+          <div class="relative h-44 flex items-center justify-center">
+            <canvas id="donutChart"></canvas>
+          </div>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-[10px] text-emerald-400 font-bold block">&bull; BEKERJA</span>
+              <span id="donut-employed" class="text-sm font-extrabold text-white">-</span>
+              <span id="donut-employed-pct" class="text-[9px] text-slate-500 block">-</span>
+            </div>
+            <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-[10px] text-rose-400 font-bold block">&bull; BELUM BEKERJA</span>
+              <span id="donut-unemployed" class="text-sm font-extrabold text-white">-</span>
+              <span id="donut-unemployed-pct" class="text-[9px] text-slate-500 block">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator Impak What-If -->
+        <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-850 space-y-4 relative overflow-hidden">
+          <div class="absolute top-0 right-0 p-3 opacity-10">
+            <svg class="w-16 h-16 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping"></span>
+              <span>Simulator Impak GE (What-If)</span>
+            </h4>
+            <p class="text-xs text-slate-400 mt-1">Simulasikan peningkatan bilangan kemasukan kerja fakulti untuk melihat perubahan kadar keseluruhan universiti secara masa nyata.</p>
+          </div>
+
+          <form id="simulatorForm" onsubmit="runSimulation(event)" class="space-y-3 pt-2">
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Pilih Fakulti Sasaran</label>
+              <select 
+                id="simFaculty" 
+                required 
+                onchange="updateSimulatorMax()"
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-150"
+              >
+                <option value="">-- Pilih Fakulti/PTj --</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Tambah Graduan Bekerja</label>
+              <input 
+                type="number" 
+                id="simValue" 
+                min="1" 
+                placeholder="Pilih fakulti dahulu"
+                disabled 
+                required
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-150 disabled:opacity-40"
+              />
+              <span id="simRangeInfo" class="text-[10px] text-slate-500 mt-1 block"></span>
+            </div>
+
+            <button 
+              type="submit" 
+              id="simSubmitBtn"
+              disabled
+              class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:from-slate-850 disabled:to-slate-850 text-white disabled:text-slate-500 rounded-xl text-xs font-bold transition duration-150 shadow-lg shadow-indigo-600/10 cursor-pointer disabled:cursor-not-allowed"
+            >
+              Jalankan Simulasi
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Jadual Data Komprehensif -->
+    <div class="bg-slate-800/60 rounded-2xl border border-slate-850 overflow-hidden space-y-4 p-6">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h4 id="table-main-title" class="text-lg font-bold text-white">Jadual Statistik Kebolehpasaran Keseluruhan</h4>
+          <p class="text-xs text-slate-400">Susun dan tapis pangkalan data mengikut keperluan khusus</p>
+        </div>
+        
+        <!-- Carian & Penapisan -->
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <!-- Input Carian -->
+          <div class="relative w-full sm:w-64">
+            <input 
+              type="text" 
+              id="searchBox" 
+              oninput="updateDisplay()"
+              placeholder="Cari nama fakulti..." 
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-150"
+            />
+            <span class="absolute left-3 top-2.5 text-slate-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+          </div>
+
+          <!-- Dropdown Penapis -->
+          <select 
+            id="filterSelect" 
+            onchange="updateDisplay()"
+            class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-150"
+          >
+            <option value="ALL">Semua Prestasi</option>
+            <option value="EXCELLENT">Cemerlang ( &ge; 95% )</option>
+            <option value="AVERAGE">Sederhana ( 87.01% - 94.99% )</option>
+            <option value="CRITICAL">Kritikal ( &le; 87% )</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Jadual -->
+      <div class="overflow-x-auto rounded-xl border border-slate-800 custom-scrollbar">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-900/60 text-slate-300 text-xs uppercase tracking-wider font-bold">
+              <th class="py-4 px-5 text-center w-16">No.</th>
+              <th class="py-4 px-5 cursor-pointer hover:bg-slate-800 hover:text-white transition-all" onclick="sortTable('name')">
+                <div class="flex items-center space-x-1.5">
+                  <span>Fakulti / PTj</span>
+                  <span id="sort-icon-name" class="text-slate-500 text-[9px]">&#9650;&#9660;</span>
+                </div>
+              </th>
+              <th class="py-4 px-5 cursor-pointer hover:bg-slate-800 hover:text-white text-center transition-all" onclick="sortTable('employed')">
+                <div class="flex items-center justify-center space-x-1.5">
+                  <span>Bekerja</span>
+                  <span id="sort-icon-employed" class="text-slate-500 text-[9px]">&#9650;&#9660;</span>
+                </div>
+              </th>
+              <th class="py-4 px-5 cursor-pointer hover:bg-slate-800 hover:text-white text-center transition-all" onclick="sortTable('unemployed')">
+                <div class="flex items-center justify-center space-x-1.5">
+                  <span>Belum Bekerja</span>
+                  <span id="sort-icon-unemployed" class="text-slate-500 text-[9px]">&#9650;&#9660;</span>
+                </div>
+              </th>
+              <th class="py-4 px-5 cursor-pointer hover:bg-slate-800 hover:text-white text-center transition-all" onclick="sortTable('total')">
+                <div class="flex items-center justify-center space-x-1.5">
+                  <span>Jumlah Graduan</span>
+                  <span id="sort-icon-total" class="text-slate-500 text-[9px]">&#9650;&#9660;</span>
+                </div>
+              </th>
+              <th class="py-4 px-5 cursor-pointer hover:bg-slate-800 hover:text-white text-center transition-all" onclick="sortTable('rate')">
+                <div class="flex items-center justify-center space-x-1.5">
+                  <span>Kadar GE (%)</span>
+                  <span id="sort-icon-rate" class="text-slate-500 text-[9px]">&#9650;&#9660;</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-800 text-slate-300 text-xs">
+            <!-- Data akan dimuatkan menggunakan JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bahagian Kaki (Footer) -->
+  <footer class="bg-slate-950 border-t border-slate-800 py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 space-y-3 md:space-y-0">
+      <p id="footer-note">© 2026 Universiti Malaya. Paparan data ini dijana berdasarkan dokumen GE rasmi KPT.</p>
+      <div class="flex space-x-4">
+        <span>Sistem Rujukan: SKPG KPT</span>
+        <span>•</span>
+        <span>Direkabentuk Secara Responsif</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Pangkalan Data Asal 1: Keseluruhan (All Graduates)
+    const DATA_ALL_GRADUATES = [
+      { id: 1, name: "AKADEMI PENGAJIAN ISLAM", employed: 483, unemployed: 45, total: 528, rate: 91.48 },
+      { id: 2, name: "AKADEMI PENGAJIAN MELAYU", employed: 140, unemployed: 3, total: 143, rate: 97.90 },
+      { id: 3, name: "FAKULTI ALAM BINA", employed: 269, unemployed: 24, total: 293, rate: 91.81 },
+      { id: 4, name: "FAKULTI BAHASA DAN LINGUISTIK", employed: 262, unemployed: 40, total: 302, rate: 86.75 },
+      { id: 5, name: "FAKULTI FARMASI", employed: 55, unemployed: 6, total: 61, rate: 90.16 },
+      { id: 6, name: "FAKULTI KEJURUTERAAN", employed: 474, unemployed: 28, total: 502, rate: 94.42 },
+      { id: 7, name: "FAKULTI PENDIDIKAN", employed: 1043, unemployed: 0, total: 1043, rate: 100.00 },
+      { id: 8, name: "FAKULTI PERGIGIAN", employed: 106, unemployed: 0, total: 106, rate: 100.00 },
+      { id: 9, name: "FAKULTI PERNIAGAAN DAN EKONOMI", employed: 758, unemployed: 100, total: 858, rate: 88.34 },
+      { id: 10, name: "FAKULTI PERUBATAN", employed: 554, unemployed: 27, total: 581, rate: 95.35 },
+      { id: 11, name: "FAKULTI SAINS", employed: 568, unemployed: 137, total: 705, rate: 80.57 },
+      { id: 12, name: "FAKULTI SAINS KOMPUTER DAN TEKNOLOGI MAKLUMAT", employed: 538, unemployed: 90, total: 628, rate: 85.67 },
+      { id: 13, name: "FAKULTI SASTERA DAN SAINS SOSIAL", employed: 638, unemployed: 124, total: 762, rate: 83.73 },
+      { id: 14, name: "FAKULTI SENI KREATIF", employed: 110, unemployed: 19, total: 129, rate: 85.27 },
+      { id: 15, name: "FAKULTI SUKAN DAN SAINS EKSESAIS", employed: 70, unemployed: 6, total: 76, rate: 92.11 },
+      { id: 16, name: "FAKULTI UNDANG-UNDANG", employed: 303, unemployed: 29, total: 332, rate: 91.27 },
+      { id: 17, name: "INSTITUT ANTARABANGSA POLISI AWAM DAN PENGURUSAN", employed: 64, unemployed: 0, total: 64, rate: 100.00 },
+      { id: 18, name: "INSTITUT ASIA EROPAH", employed: 47, unemployed: 0, total: 47, rate: 100.00 },
+      { id: 19, name: "INSTITUT PENGAJIAN TERMAJU", employed: 108, unemployed: 4, total: 112, rate: 96.43 },
+      { id: 20, name: "PUSAT PENDIDIKAN BERTERUSAN UNIVERSITI MALAYA", employed: 549, unemployed: 5, total: 554, rate: 99.10 }
+    ];
+
+    // Pangkalan Data Asal 2: Warganegara (Citizens Only)
+    const DATA_CITIZENS = [
+      { id: 1, name: "AKADEMI PENGAJIAN ISLAM", employed: 448, unemployed: 42, total: 490, rate: 91.43 },
+      { id: 2, name: "AKADEMI PENGAJIAN MELAYU", employed: 136, unemployed: 3, total: 139, rate: 97.84 },
+      { id: 3, name: "FAKULTI ALAM BINA", employed: 237, unemployed: 8, total: 245, rate: 96.73 },
+      { id: 4, name: "FAKULTI BAHASA DAN LINGUISTIK", employed: 167, unemployed: 11, total: 178, rate: 93.82 },
+      { id: 5, name: "FAKULTI FARMASI", employed: 45, unemployed: 4, total: 49, rate: 91.84 },
+      { id: 6, name: "FAKULTI KEJURUTERAAN", employed: 375, unemployed: 20, total: 395, rate: 94.94 },
+      { id: 7, name: "FAKULTI PENDIDIKAN", employed: 573, unemployed: 0, total: 573, rate: 100.00 },
+      { id: 8, name: "FAKULTI PERGIGIAN", employed: 102, unemployed: 0, total: 102, rate: 100.00 },
+      { id: 9, name: "FAKULTI PERNIAGAAN DAN EKONOMI", employed: 609, unemployed: 22, total: 631, rate: 96.51 },
+      { id: 10, name: "FAKULTI PERUBATAN", employed: 532, unemployed: 17, total: 549, rate: 96.90 },
+      { id: 11, name: "FAKULTI SAINS", employed: 503, unemployed: 69, total: 572, rate: 87.94 },
+      { id: 12, name: "FAKULTI SAINS KOMPUTER DAN TEKNOLOGI MAKLUMAT", employed: 475, unemployed: 52, total: 527, rate: 90.13 },
+      { id: 13, name: "FAKULTI SASTERA DAN SAINS SOSIAL", employed: 482, unemployed: 40, total: 522, rate: 92.34 },
+      { id: 14, name: "FAKULTI SENI KREATIF", employed: 58, unemployed: 4, total: 62, rate: 93.55 },
+      { id: 15, name: "FAKULTI SUKAN DAN SAINS EKSESAIS", employed: 63, unemployed: 2, total: 65, rate: 96.92 },
+      { id: 16, name: "FAKULTI UNDANG-UNDANG", employed: 280, unemployed: 17, total: 297, rate: 94.28 },
+      { id: 17, name: "INSTITUT ANTARABANGSA POLISI AWAM DAN PENGURUSAN", employed: 26, unemployed: 0, total: 26, rate: 100.00 },
+      { id: 18, name: "INSTITUT ASIA EROPAH", employed: 2, unemployed: 0, total: 2, rate: 100.00 },
+      { id: 19, name: "INSTITUT PENGAJIAN TERMAJU", employed: 89, unemployed: 2, total: 91, rate: 97.80 },
+      { id: 20, name: "PUSAT PENDIDIKAN BERTERUSAN UNIVERSITI MALAYA", employed: 549, unemployed: 5, total: 554, rate: 99.10 }
+    ];
+
+    // State Sistem Dinamik
+    let activeDatasetType = "ALL_GRAD"; // 'ALL_GRAD' atau 'CITIZEN'
+    let currentData = JSON.parse(JSON.stringify(DATA_ALL_GRADUATES));
+    let sortField = "rate";
+    let sortAsc = false;
+
+    // Instansi Carta Chart.js
+    let barChartInstance = null;
+    let donutChartInstance = null;
+
+    // Permulaan Program
+    window.onload = function() {
+      initApp();
+    };
+
+    function initApp() {
+      calculateSummary();
+      populateSimulatorOptions();
+      updateDisplay();
+      showNotification("Papan Pemuka Bersedia!");
+    }
+
+    // Fungsi Menguruskan Pertukaran Dataset
+    function switchDataset(type) {
+      if (activeDatasetType === type) return;
+      activeDatasetType = type;
+
+      const btnAll = document.getElementById('btn-dataset-all');
+      const btnWarga = document.getElementById('btn-dataset-warga');
+
+      if (type === 'ALL_GRAD') {
+        currentData = JSON.parse(JSON.stringify(DATA_ALL_GRADUATES));
+        btnAll.className = "px-4 py-1.5 text-xs font-bold rounded-lg transition duration-200 bg-indigo-600 text-white shadow-md";
+        btnWarga.className = "px-4 py-1.5 text-xs font-bold rounded-lg transition duration-200 text-slate-400 hover:text-white";
+        
+        document.getElementById('kpi-label-total').innerText = "Jumlah Graduan (Keseluruhan)";
+        document.getElementById('kpi-dataset-badge').innerText = "Kadar Kebolehpasaran Semasa";
+        document.getElementById('chart-main-title').innerText = "Taburan Peratusan Kebolehpasaran (Keseluruhan)";
+        document.getElementById('table-main-title').innerText = "Jadual Statistik Kebolehpasaran Keseluruhan";
+        document.getElementById('footer-note').innerText = "© 2026 Universiti Malaya. Paparan data ini dijana berdasarkan dokumen GE Keseluruhan rasmi KPT.";
+        
+        showNotification("Dataset ditukar ke: Keseluruhan Graduan");
+      } else {
+        currentData = JSON.parse(JSON.stringify(DATA_CITIZENS));
+        btnWarga.className = "px-4 py-1.5 text-xs font-bold rounded-lg transition duration-200 bg-indigo-600 text-white shadow-md";
+        btnAll.className = "px-4 py-1.5 text-xs font-bold rounded-lg transition duration-200 text-slate-400 hover:text-white";
+        
+        document.getElementById('kpi-label-total').innerText = "Jumlah Graduan (Warganegara)";
+        document.getElementById('kpi-dataset-badge').innerText = "Kadar Kebolehpasaran Warganegara";
+        document.getElementById('chart-main-title').innerText = "Taburan Peratusan Kebolehpasaran (Warganegara)";
+        document.getElementById('table-main-title').innerText = "Jadual Statistik Kebolehpasaran Warganegara";
+        document.getElementById('footer-note').innerText = "© 2026 Universiti Malaya. Paparan data ini dijana berdasarkan dokumen GE Warganegara rasmi KPT.";
+        
+        showNotification("Dataset ditukar ke: Graduan Warganegara sahaja");
+      }
+
+      calculateSummary();
+      populateSimulatorOptions();
+      updateSimulatorMax();
+      updateDisplay();
+    }
+
+    // Fungsi Pengiraan Ringkasan & KPI
+    function calculateSummary() {
+      const totalGrads = currentData.reduce((acc, c) => acc + c.total, 0);
+      const totalEmp = currentData.reduce((acc, c) => acc + c.employed, 0);
+      const totalUnemp = currentData.reduce((acc, c) => acc + c.unemployed, 0);
+      const avgRate = totalGrads > 0 ? (totalEmp / totalGrads) * 100 : 0;
+
+      // Kemas kini paparan teks KPI
+      document.getElementById('kpi-total').innerText = totalGrads.toLocaleString();
+      document.getElementById('kpi-rate').innerText = avgRate.toFixed(2) + "%";
+      document.getElementById('kpi-employed').innerText = totalEmp.toLocaleString();
+      document.getElementById('kpi-unemployed').innerText = totalUnemp.toLocaleString();
+      document.getElementById('kpi-unemployed-rate').innerText = "Kadar Pengangguran: " + (100 - avgRate).toFixed(2) + "%";
+
+      // Kemas kini data donut widget
+      document.getElementById('donut-employed').innerText = totalEmp.toLocaleString();
+      document.getElementById('donut-employed-pct').innerText = "(" + avgRate.toFixed(2) + "%)";
+      document.getElementById('donut-unemployed').innerText = totalUnemp.toLocaleString();
+      document.getElementById('donut-unemployed-pct').innerText = "(" + (100 - avgRate).toFixed(2) + "%)";
+
+      renderDonutChart(avgRate);
+    }
+
+    // Mengemas kini pilihan drop-down simulator
+    function populateSimulatorOptions() {
+      const select = document.getElementById('simFaculty');
+      const savedValue = select.value;
+      
+      select.innerHTML = '<option value="">-- Pilih Fakulti/PTj --</option>';
+      
+      currentData.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.name;
+        option.innerText = `${item.name} (Baki belum bekerja: ${item.unemployed})`;
+        if (item.unemployed === 0) {
+          option.disabled = true;
+        }
+        select.appendChild(option);
+      });
+
+      if (savedValue) {
+        select.value = savedValue;
+      }
+    }
+
+    // Kemas kini had maksimum input berdasarkan baki penganggur
+    function updateSimulatorMax() {
+      const select = document.getElementById('simFaculty');
+      const input = document.getElementById('simValue');
+      const btn = document.getElementById('simSubmitBtn');
+      const info = document.getElementById('simRangeInfo');
+
+      if (!select.value) {
+        input.disabled = true;
+        input.value = "";
+        input.placeholder = "Pilih fakulti dahulu";
+        btn.disabled = true;
+        info.innerText = "";
+        return;
+      }
+
+      const faculty = currentData.find(f => f.name === select.value);
+      if (faculty) {
+        input.disabled = false;
+        input.max = faculty.unemployed;
+        input.value = "";
+        input.placeholder = `Maksimum: ${faculty.unemployed}`;
+        btn.disabled = false;
+        info.innerText = `Boleh memasukkan nilai dari 1 hingga ${faculty.unemployed} graduan.`;
+      }
+    }
+
+    // Jalankan pengiraan simulasi
+    function runSimulation(e) {
+      e.preventDefault();
+      const select = document.getElementById('simFaculty');
+      const input = document.getElementById('simValue');
+      const facultyName = select.value;
+      const addValue = parseInt(input.value) || 0;
+
+      if (!facultyName || addValue <= 0) return;
+
+      currentData = currentData.map(item => {
+        if (item.name === facultyName) {
+          const newEmployed = Math.min(item.total, item.employed + addValue);
+          const newUnemployed = Math.max(0, item.total - newEmployed);
+          const newRate = parseFloat(((newEmployed / item.total) * 100).toFixed(2));
+          return {
+            ...item,
+            employed: newEmployed,
+            unemployed: newUnemployed,
+            rate: newRate
+          };
+        }
+        return item;
+      });
+
+      calculateSummary();
+      populateSimulatorOptions();
+      updateSimulatorMax();
+      updateDisplay();
+      showNotification(`Simulasi Berjaya: Ditambah ${addValue} bekerja ke ${facultyName}`);
+    }
+
+    // Set Semula ke Nilai Asal
+    function resetData() {
+      if (activeDatasetType === "ALL_GRAD") {
+        currentData = JSON.parse(JSON.stringify(DATA_ALL_GRADUATES));
+      } else {
+        currentData = JSON.parse(JSON.stringify(DATA_CITIZENS));
+      }
+      calculateSummary();
+      populateSimulatorOptions();
+      updateSimulatorMax();
+      updateDisplay();
+      showNotification("Data telah diset semula kepada statistik rasmi dokumen!");
+    }
+
+    // Pengurusan Tunjukkan Notifikasi
+    function showNotification(msg) {
+      const box = document.getElementById('notification-box');
+      const txt = document.getElementById('notification-text');
+      txt.innerText = msg;
+      
+      box.classList.remove('hidden');
+      setTimeout(() => {
+        box.classList.remove('opacity-0', 'translate-y-10');
+      }, 50);
+
+      setTimeout(() => {
+        box.classList.add('opacity-0', 'translate-y-10');
+        setTimeout(() => {
+          box.classList.add('hidden');
+        }, 300);
+      }, 4000);
+    }
+
+    // Eksport CSV
+    function exportCSV() {
+      const label = activeDatasetType === "ALL_GRAD" ? "Keseluruhan" : "Warganegara";
+      const headers = "Fakulti/PTj,Graduan Bekerja,Graduan Belum Bekerja,Jumlah Graduan,Kadar GE (%)\n";
+      const rows = currentData.map(item => `"${item.name}",${item.employed},${item.unemployed},${item.total},${item.rate}%`).join("\n");
+      const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Kadar_Bekerja_Graduan_2025_(${label}).csv`);
+      a.click();
+      showNotification(`Fail CSV (${label}) berjaya dimuat turun!`);
+    }
+
+    // Mengisih lajur jadual
+    function sortTable(field) {
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        sortAsc = field === 'name' ? true : false;
+      }
+      updateDisplay();
+    }
+
+    // Mengemas kini jadual dan carta
+    function updateDisplay() {
+      const searchQuery = document.getElementById('searchBox').value.toLowerCase();
+      const filterType = document.getElementById('filterSelect').value;
+
+      // Filter Data
+      let processed = [...currentData];
+      if (searchQuery) {
+        processed = processed.filter(item => item.name.toLowerCase().includes(searchQuery));
+      }
+
+      // Klasifikasi baru: Cemerlang (>= 95%), Sederhana (87% - 94.9%), Kritikal (<= 87%)
+      if (filterType === "EXCELLENT") {
+        processed = processed.filter(item => item.rate >= 95);
+      } else if (filterType === "AVERAGE") {
+        processed = processed.filter(item => item.rate > 87 && item.rate < 95);
+      } else if (filterType === "CRITICAL") {
+        processed = processed.filter(item => item.rate <= 87);
+      }
+
+      // Sort Data
+      processed.sort((a, b) => {
+        let valA = a[sortField];
+        let valB = b[sortField];
+
+        if (typeof valA === 'string') {
+          return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return sortAsc ? valA - valB : valB - valA;
+      });
+
+      // Kemas kini Lencana Bilangan
+      document.getElementById('faculty-count-badge').innerText = `${processed.length} Fakulti Dipaparkan`;
+
+      // Kemas kini Jadual HTML
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = "";
+
+      if (processed.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colSpan="6" class="py-12 text-center text-slate-500">
+              Tiada fakulti atau PTj yang sepadan dengan kriteria carian/penapisan anda.
+            </td>
+          </tr>
+        `;
+      } else {
+        processed.forEach((item, idx) => {
+          let rateTextColor = "text-emerald-400 font-extrabold";
+          let borderStyle = "border-l-4 border-l-emerald-500";
+          
+          if (item.rate <= 87) {
+            rateTextColor = "text-rose-400 font-extrabold";
+            borderStyle = "border-l-4 border-l-rose-500";
+          } else if (item.rate < 95) {
+            rateTextColor = "text-amber-400 font-extrabold";
+            borderStyle = "border-l-4 border-l-amber-500";
+          }
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-800/40 transition duration-150";
+          tr.innerHTML = `
+            <td class="py-3.5 px-5 text-center text-slate-500 font-medium">${idx + 1}</td>
+            <td class="py-3.5 px-5 font-semibold text-slate-200 ${borderStyle}">${item.name}</td>
+            <td class="py-3.5 px-5 text-center font-medium">${item.employed}</td>
+            <td class="py-3.5 px-5 text-center font-medium text-slate-400">${item.unemployed}</td>
+            <td class="py-3.5 px-5 text-center font-medium text-indigo-300">${item.total}</td>
+            <td class="py-3.5 px-5 text-center ${rateTextColor}">${item.rate.toFixed(2)}%</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      }
+
+      // Kemas kini ikon penunjuk pengisihan (sort-icons)
+      const fields = ['name', 'employed', 'unemployed', 'total', 'rate'];
+      fields.forEach(f => {
+        const iconEl = document.getElementById(`sort-icon-${f}`);
+        if (f === sortField) {
+          iconEl.innerHTML = sortAsc ? "&#9650;" : "&#9660;";
+          iconEl.className = "text-indigo-400 font-extrabold";
+        } else {
+          iconEl.innerHTML = "&#9650;&#9660;";
+          iconEl.className = "text-slate-650 text-[9px]";
+        }
+      });
+
+      renderBarChart(processed);
+    }
+
+    // Melukis Carta Bar Mendatar (Chart.js)
+    function renderBarChart(chartData) {
+      const ctx = document.getElementById('barChart').getContext('2d');
+      
+      const labels = chartData.map(item => item.name);
+      const rates = chartData.map(item => item.rate);
+      
+      const backgroundColors = rates.map(rate => {
+        if (rate >= 95) return 'rgba(16, 185, 129, 0.85)'; // Emerald
+        if (rate > 87) return 'rgba(245, 158, 11, 0.85)';  // Amber
+        return 'rgba(244, 63, 94, 0.85)'; // Rose
+      });
+
+      const borderColors = rates.map(rate => {
+        if (rate >= 95) return '#10b981';
+        if (rate > 87) return '#f59e0b';
+        return '#f43f5e';
+      });
+
+      if (barChartInstance) {
+        barChartInstance.destroy();
+      }
+
+      barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Kadar GE (%)',
+            data: rates,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const idx = context.dataIndex;
+                  const item = chartData[idx];
+                  return ` Kadar GE: ${context.parsed.x}% (Bekerja: ${item.employed}/${item.total})`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: '#334155',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 10 }
+              },
+              max: 100
+            },
+            y: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#cbd5e1',
+                font: { 
+                  size: 9,
+                  weight: 'bold'
+                },
+                callback: function(value) {
+                  const label = this.getLabelForValue(value);
+                  return label.length > 25 ? label.substr(0, 25) + '...' : label;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Melukis Carta Donut (Chart.js)
+    function renderDonutChart(employedRate) {
+      const ctx = document.getElementById('donutChart').getContext('2d');
+      const unemployedRate = 100 - employedRate;
+
+      if (donutChartInstance) {
+        donutChartInstance.destroy();
+      }
+
+      donutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Bekerja', 'Belum Bekerja'],
+          datasets: [{
+            data: [employedRate, unemployedRate],
+            backgroundColor: ['#10b981', '#f43f5e'],
+            borderColor: '#1e293b',
+            borderWidth: 2,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
